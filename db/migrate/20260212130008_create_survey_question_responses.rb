@@ -6,7 +6,7 @@ class CreateSurveyQuestionResponses < ActiveRecord::Migration[8.1]
       t.references :survey_question, null: false, foreign_key: true
       t.references :employee, null: false, foreign_key: true
 
-      t.uuid :uuid
+      t.uuid :uuid, default: "gen_random_uuid()", null: false
       t.integer :value
       t.text :comment
 

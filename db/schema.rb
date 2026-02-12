@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_02_12_130008) do
+ActiveRecord::Schema[8.1].define(version: 2026_02_12_130008) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pgcrypto"
@@ -21,7 +21,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_02_12_130008) do
     t.string "email", limit: 100
     t.string "name", limit: 100
     t.datetime "updated_at", null: false
-    t.uuid "uuid"
+    t.uuid "uuid", default: -> { "gen_random_uuid()" }, null: false
     t.index ["deleted_at"], name: "index_clients_on_deleted_at"
     t.index ["email"], name: "index_clients_on_email"
     t.index ["uuid"], name: "index_clients_on_uuid"
@@ -32,7 +32,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_02_12_130008) do
     t.datetime "deleted_at"
     t.string "name", limit: 100
     t.datetime "updated_at", null: false
-    t.uuid "uuid"
+    t.uuid "uuid", default: -> { "gen_random_uuid()" }, null: false
     t.index ["deleted_at"], name: "index_departaments_on_deleted_at"
     t.index ["uuid"], name: "index_departaments_on_uuid"
   end
@@ -52,7 +52,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_02_12_130008) do
     t.string "tenure", limit: 50
     t.string "uf", limit: 2
     t.datetime "updated_at", null: false
-    t.uuid "uuid"
+    t.uuid "uuid", default: -> { "gen_random_uuid()" }, null: false
     t.index ["client_id"], name: "index_employees_on_client_id"
     t.index ["corporation_email"], name: "index_employees_on_corporation_email"
     t.index ["deleted_at"], name: "index_employees_on_deleted_at"
@@ -67,7 +67,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_02_12_130008) do
     t.datetime "deleted_at"
     t.string "name", limit: 100
     t.datetime "updated_at", null: false
-    t.uuid "uuid"
+    t.uuid "uuid", default: -> { "gen_random_uuid()" }, null: false
     t.index ["deleted_at"], name: "index_job_titles_on_deleted_at"
     t.index ["uuid"], name: "index_job_titles_on_uuid"
   end
@@ -77,7 +77,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_02_12_130008) do
     t.datetime "deleted_at"
     t.string "name", limit: 100
     t.datetime "updated_at", null: false
-    t.uuid "uuid"
+    t.uuid "uuid", default: -> { "gen_random_uuid()" }, null: false
     t.index ["deleted_at"], name: "index_roles_on_deleted_at"
     t.index ["uuid"], name: "index_roles_on_uuid"
   end
@@ -89,7 +89,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_02_12_130008) do
     t.bigint "employee_id", null: false
     t.bigint "survey_question_id", null: false
     t.datetime "updated_at", null: false
-    t.uuid "uuid"
+    t.uuid "uuid", default: -> { "gen_random_uuid()" }, null: false
     t.integer "value"
     t.index ["deleted_at"], name: "index_survey_question_responses_on_deleted_at"
     t.index ["employee_id"], name: "index_survey_question_responses_on_employee_id"
@@ -104,7 +104,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_02_12_130008) do
     t.text "question"
     t.bigint "survey_id", null: false
     t.datetime "updated_at", null: false
-    t.uuid "uuid"
+    t.uuid "uuid", default: -> { "gen_random_uuid()" }, null: false
     t.index ["deleted_at"], name: "index_survey_questions_on_deleted_at"
     t.index ["survey_id"], name: "index_survey_questions_on_survey_id"
     t.index ["uuid"], name: "index_survey_questions_on_uuid"
@@ -117,7 +117,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_02_12_130008) do
     t.text "description"
     t.string "name", limit: 100
     t.datetime "updated_at", null: false
-    t.uuid "uuid"
+    t.uuid "uuid", default: -> { "gen_random_uuid()" }, null: false
     t.index ["client_id"], name: "index_surveys_on_client_id"
     t.index ["deleted_at"], name: "index_surveys_on_deleted_at"
     t.index ["uuid"], name: "index_surveys_on_uuid"

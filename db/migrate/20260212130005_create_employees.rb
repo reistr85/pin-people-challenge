@@ -8,7 +8,7 @@ class CreateEmployees < ActiveRecord::Migration[8.1]
       t.references :departament, null: true, foreign_key: true
       t.references :role, null: true, foreign_key: true
 
-      t.uuid :uuid
+      t.uuid :uuid, default: "gen_random_uuid()", null: false
       t.string :name, limit: 100
       t.string :personal_email, limit: 100
       t.string :corporation_email, limit: 100

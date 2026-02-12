@@ -5,7 +5,7 @@ class CreateSurveyQuestions < ActiveRecord::Migration[8.1]
     create_table :survey_questions do |t|
       t.references :survey, null: false, foreign_key: true
 
-      t.uuid :uuid
+      t.uuid :uuid, default: "gen_random_uuid()", null: false
       t.text :question
 
       t.timestamps

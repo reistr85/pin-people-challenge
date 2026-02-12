@@ -2,10 +2,8 @@
 
 class CreateJobTitles < ActiveRecord::Migration[8.1]
   def change
-    enable_extension "pgcrypto"
-
     create_table :job_titles do |t|
-      t.uuid :uuid
+      t.uuid :uuid, default: "gen_random_uuid()", null: false
       t.string :name, limit: 100
 
       t.timestamps
