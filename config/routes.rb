@@ -12,6 +12,10 @@ Rails.application.routes.draw do
     namespace :v1 do
       get "/", to: "status#index"
       post "imports/csv", to: "imports#create"
+
+      resources :clients, param: :uuid do
+        resources :surveys, param: :uuid, controller: "clients/surveys"
+      end
     end
   end
 end
