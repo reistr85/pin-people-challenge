@@ -1,5 +1,7 @@
 # Tech Playground Challenge
 
+**[Versão em português (README-PT.md)](README-PT.md)**
+
 Welcome to the **Tech Playground Challenge**!
 
 ## About the Challenge
