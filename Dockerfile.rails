@@ -1,0 +1,19 @@
+# Imagem Ruby com Rails para criar o projeto
+FROM ruby:3.2-bookworm
+
+RUN apt-get update -qq && apt-get install -y \
+    build-essential \
+    git \
+    libpq-dev \
+    nodejs \
+    default-libmysqlclient-dev \
+    sqlite3 \
+    libsqlite3-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN gem install rails -v "~> 7.2"
+
+WORKDIR /app
+
+# Manter o container rodando para você poder entrar com exec
+CMD ["bash"]
