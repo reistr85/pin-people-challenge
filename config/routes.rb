@@ -15,6 +15,7 @@ Rails.application.routes.draw do
 
       resources :clients
       resources :surveys
+      resources :employees
     end
   end
 end
