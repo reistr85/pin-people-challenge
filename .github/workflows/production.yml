@@ -16,10 +16,15 @@
 #   SLACK_WEBHOOK_URL, SLACK_WEBHOOK_CHANNEL - (opcional) notificações Slack
 name: 🚀 Deploy Pin People API (K8s)
 
+# on:
+#   push:
+#     tags:
+#       - "v*.*.*"
+
 on:
   push:
-    tags:
-      - "v*.*.*"
+    branches:
+      - "main"
 
 jobs:
   build-and-deploy:
