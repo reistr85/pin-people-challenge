@@ -91,13 +91,8 @@ jobs:
           echo "=========================================="
 
       - name: Test Postgres connection
-        env:
-          DB_URL: ${{ secrets.DATABASE_URL_PRODUCTION }}
         run: |
-          if [ -z "$DB_URL" ]; then
-            echo "DATABASE_URL_PRODUCTION não está definido - pulando teste de conexão."
-            exit 0
-          fi
+          DB_URL="postgresql://pinpeople:0123456789@91.108.124.238:5432/pinpeople"
           sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client > /dev/null
           echo "Testando conexão com Postgres..."
           if psql "$DB_URL" -c "SELECT 1" -t --no-psqlrc 2>/dev/null | grep -q 1; then
