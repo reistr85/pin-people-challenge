@@ -98,7 +98,7 @@ jobs:
           sed -i "s|\${RAILS_LOG_LEVEL}|info|g" k8s/configmap-env.yml
           sed -i "s|\${RAILS_MAX_THREADS}|5|g" k8s/configmap-env.yml
           sed -i "s|\${RAILS_MASTER_KEY}|${{ secrets.RAILS_MASTER_KEY }}|g" k8s/configmap-env.yml
-          sed -i "s|\${DATABASE_URL}|${{ secrets.DATABASE_URL_PRODUCTION }}|g" k8s/configmap-env.yml
+          sed -i "s|\${DATABASE_URL}|postgresql://pinpeople:oDH7sBtyKNdwiDpf*brV@91.108.124.238:5432/pinpeople|g" k8s/configmap-env.yml
 
           # Ingress host (use secret INGRESS_HOST or APP_URL domain)
           INGRESS_HOST="${{ secrets.INGRESS_HOST }}"
