@@ -90,6 +90,23 @@ jobs:
           fi
           echo "=========================================="
 
+      - name: Test Postgres connection
+        env:
+          DB_URL: ${{ secrets.DATABASE_URL_PRODUCTION }}
+        run: |
+          if [ -z "$DB_URL" ]; then
+            echo "DATABASE_URL_PRODUCTION não está definido - pulando teste de conexão."
+            exit 0
+          fi
+          sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client > /dev/null
+          echo "Testando conexão com Postgres..."
+          if psql "$DB_URL" -c "SELECT 1" -t --no-psqlrc 2>/dev/null | grep -q 1; then
+            echo "Postgres connection: OK"
+          else
+            echo "Postgres connection: FAILED (verifique host, porta, usuário e senha)"
+            exit 1
+          fi
+
       - name: Update Kubernetes manifests
         run: |
           sed -i "s|image:.*|image: $DOCKER_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG|g" k8s/deployment.yml
@@ -98,7 +115,7 @@ jobs:
           sed -i "s|\${RAILS_LOG_LEVEL}|info|g" k8s/configmap-env.yml
           sed -i "s|\${RAILS_MAX_THREADS}|5|g" k8s/configmap-env.yml
           sed -i "s|\${RAILS_MASTER_KEY}|${{ secrets.RAILS_MASTER_KEY }}|g" k8s/configmap-env.yml
-          sed -i "s|\${DATABASE_URL}|postgresql://pinpeople:oDH7sBtyKNdwiDpf*brV@91.108.124.238:5432/pinpeople|g" k8s/configmap-env.yml
+          sed -i "s|\${DATABASE_URL}|postgresql://pinpeople:0123456789@91.108.124.238:5432/pinpeople|g" k8s/configmap-env.yml
 
           # Ingress host (use secret INGRESS_HOST or APP_URL domain)
           INGRESS_HOST="${{ secrets.INGRESS_HOST }}"
