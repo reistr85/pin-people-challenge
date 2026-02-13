@@ -13,9 +13,8 @@ Rails.application.routes.draw do
       get "/", to: "status#index"
       post "imports/csv", to: "imports#create"
 
-      resources :clients, param: :uuid do
-        resources :surveys, param: :uuid, controller: "clients/surveys"
-      end
+      resources :clients
+      resources :surveys
     end
   end
 end

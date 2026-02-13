@@ -3,32 +3,24 @@
 module Api
   module V1
     class ClientsController < ApplicationController
-      include ApiJsonWithoutId
-
       before_action :set_client, only: %i[show update destroy]
 
       def index
-        clients = Client.active.order(created_at: :desc)
-        render json: api_json(clients)
+        @clients = Client.active.order(created_at: :desc)
       end
 
       def show
-        render json: api_json(@client)
       end
 
       def create
-        client = Client.new(client_params)
-        if client.save
-          render json: api_json(client), status: :created
-        else
-          render json: { errors: client.errors.full_messages }, status: :unprocessable_entity
+        @client = Client.new(client_params)
+        unless @client.save
+          render json: { errors: @client.errors.full_messages }, status: :unprocessable_entity
         end
       end
 
       def update
-        if @client.update(client_params)
-          render json: api_json(@client)
-        else
+        unless @client.update(client_params)
           render json: { errors: @client.errors.full_messages }, status: :unprocessable_entity
         end
       end
