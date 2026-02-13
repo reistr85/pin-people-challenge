@@ -76,7 +76,7 @@ jobs:
 
       - name: Debug env and secrets (safe - no values printed)
         env:
-          DB_URL: ${{ vars.DATABASE_URL_PRODUCTION }}
+          DB_URL_VARS: ${{ vars.DATABASE_URL_PRODUCTION }}
           DB_URL: ${{ secrets.DATABASE_URL_PRODUCTION }}
           RAILS_KEY: ${{ secrets.RAILS_MASTER_KEY }}
           INGRESS_HOST: ${{ secrets.INGRESS_HOST }}
