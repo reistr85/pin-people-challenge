@@ -87,9 +87,9 @@ jobs:
           # Ingress host (use secret INGRESS_HOST or APP_URL domain)
           INGRESS_HOST="${{ secrets.INGRESS_HOST }}"
           if [ -z "$INGRESS_HOST" ]; then
-            INGRESS_HOST="api.pinpeople.example.com"
+            INGRESS_HOST="api.k8s.pinpeople.mgetech.com.br"
           fi
-          sed -i "s|api.pinpeople.example.com|$INGRESS_HOST|g" k8s/ingress.yml
+          sed -i "s|api.k8s.pinpeople.mgetech.com.br|$INGRESS_HOST|g" k8s/ingress.yml
 
       - name: Setup SSH
         uses: webfactory/ssh-agent@v0.8.0
