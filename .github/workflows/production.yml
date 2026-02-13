@@ -90,18 +90,6 @@ jobs:
           fi
           echo "=========================================="
 
-      - name: Test Postgres connection
-        run: |
-          DB_URL="postgresql://pinpeople:0123456789@91.108.124.238:5432/pinpeople"
-          sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client > /dev/null
-          echo "Testando conexão com Postgres..."
-          if psql "$DB_URL" -c "SELECT 1" -t --no-psqlrc 2>/dev/null | grep -q 1; then
-            echo "Postgres connection: OK"
-          else
-            echo "Postgres connection: FAILED (verifique host, porta, usuário e senha)"
-            exit 1
-          fi
-
       - name: Update Kubernetes manifests
         run: |
           sed -i "s|image:.*|image: $DOCKER_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG|g" k8s/deployment.yml
