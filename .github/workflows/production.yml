@@ -140,31 +140,31 @@ jobs:
             sudo kubectl rollout status deployment/pin-people-deployment -n pin-people --timeout=300s
           EOF
 
-      - name: Slack Notification (success)
-        if: success()
-        uses: rtCamp/action-slack-notify@v2
-        continue-on-error: true
-        env:
-          SLACK_CHANNEL: ${{ secrets.SLACK_WEBHOOK_CHANNEL }}
-          SLACK_COLOR: "#2E8B57"
-          SLACK_ICON: ${{ env.SLACK_ICON }}
-          SLACK_TITLE: "${{ env.SLACK_TITLE }} :rocket:"
-          SLACK_MESSAGE: "Deploy Succeeded\n${{ env.SLACK_URL_APP }}"
-          SLACK_USERNAME: ${{ env.SLACK_USERNAME }}
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
+      # - name: Slack Notification (success)
+      #   if: success()
+      #   uses: rtCamp/action-slack-notify@v2
+      #   continue-on-error: true
+      #   env:
+      #     SLACK_CHANNEL: ${{ secrets.SLACK_WEBHOOK_CHANNEL }}
+      #     SLACK_COLOR: "#2E8B57"
+      #     SLACK_ICON: ${{ env.SLACK_ICON }}
+      #     SLACK_TITLE: "${{ env.SLACK_TITLE }} :rocket:"
+      #     SLACK_MESSAGE: "Deploy Succeeded\n${{ env.SLACK_URL_APP }}"
+      #     SLACK_USERNAME: ${{ env.SLACK_USERNAME }}
+      #     SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
 
-      - name: Slack Notification (failure)
-        if: failure()
-        uses: rtCamp/action-slack-notify@v2
-        continue-on-error: true
-        env:
-          SLACK_CHANNEL: ${{ secrets.SLACK_WEBHOOK_CHANNEL }}
-          SLACK_COLOR: "#F00"
-          SLACK_ICON: ${{ env.SLACK_ICON }}
-          SLACK_TITLE: "${{ env.SLACK_TITLE }} :x:"
-          SLACK_MESSAGE: "Deploy Failed\n${{ env.SLACK_URL_APP }}"
-          SLACK_USERNAME: ${{ env.SLACK_USERNAME }}
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
+      # - name: Slack Notification (failure)
+      #   if: failure()
+      #   uses: rtCamp/action-slack-notify@v2
+      #   continue-on-error: true
+      #   env:
+      #     SLACK_CHANNEL: ${{ secrets.SLACK_WEBHOOK_CHANNEL }}
+      #     SLACK_COLOR: "#F00"
+      #     SLACK_ICON: ${{ env.SLACK_ICON }}
+      #     SLACK_TITLE: "${{ env.SLACK_TITLE }} :x:"
+      #     SLACK_MESSAGE: "Deploy Failed\n${{ env.SLACK_URL_APP }}"
+      #     SLACK_USERNAME: ${{ env.SLACK_USERNAME }}
+      #     SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
 
       - name: Cleanup
         if: always()
