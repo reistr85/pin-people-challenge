@@ -11,6 +11,8 @@ Rails.application.routes.draw do
   namespace :api do
     namespace :v1 do
       get "/", to: "status#index"
+      get "health", to: "health#show"
+      get "ready", to: "health#ready"
       post "imports/csv", to: "imports#create"
 
       resources :clients

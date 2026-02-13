@@ -11,10 +11,10 @@ metadata:
 spec:
   tls:
     - hosts:
-        - api.pinpeople.example.com
+        - api.k8s.pinpeople.mgetech.com.br
       secretName: pin-people-tls
   rules:
-    - host: "api.pinpeople.example.com"
+    - host: "api.k8s.pinpeople.mgetech.com.br"
       http:
         paths:
           - path: /
