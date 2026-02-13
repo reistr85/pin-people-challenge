@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pin-people-configmap-env
+  namespace: pin-people
+data:
+  RAILS_ENV: "production"
+  RAILS_LOG_LEVEL: "${RAILS_LOG_LEVEL}"
+  RAILS_MAX_THREADS: "${RAILS_MAX_THREADS}"
+  # Rails secret key (use RAILS_MASTER_KEY from credentials or SECRET_KEY_BASE)
+  RAILS_MASTER_KEY: "${RAILS_MASTER_KEY}"
+  # Database: use DATABASE_URL (postgres://user:password@host:5432/database)
+  DATABASE_URL: "${DATABASE_URL}"
+  # Redis (Sidekiq, Action Cable, cache)
+  REDIS_URL: "redis://redis-service:6379/0"

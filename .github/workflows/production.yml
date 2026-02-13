@@ -1,0 +1,166 @@
+# Deploy da API Rails (Pin People) para VPS com K3s.
+# Dispara ao criar uma tag v*.*.* (ex: v1.0.0).
+#
+# Secrets obrigatórios no repositório:
+#   K8S_DOCKER_REPOSITORY   - ex: 123456789.dkr.ecr.us-east-1.amazonaws.com/pin-people
+#   K8S_IMAGE_NAME         - ex: api
+#   K8S_K3S_SERVER         - IP ou hostname da VPS
+#   K8S_K3S_USER           - usuário SSH na VPS
+#   K8S_SSH_PRIVATE_KEY    - chave SSH para acessar a VPS
+#   K8S_AWS_ACCESS_KEY_ID, K8S_AWS_SECRET_ACCESS_KEY, K8S_AWS_REGION - para ECR
+#   K8S_ECR_REGISTRY       - (opcional) ex: 123456789.dkr.ecr.us-east-1.amazonaws.com
+#   RAILS_MASTER_KEY       - conteúdo de config/master.key
+#   DATABASE_URL_PRODUCTION - ex: postgres://user:pass@host:5432/challenge_production
+#   INGRESS_HOST           - (opcional) host do ingress, ex: api.seudominio.com.br
+#   APP_URL                - (opcional) URL da API para notificações
+#   SLACK_WEBHOOK_URL, SLACK_WEBHOOK_CHANNEL - (opcional) notificações Slack
+name: 🚀 Deploy Pin People API (K8s)
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    env:
+      DOCKER_REPOSITORY: ${{ secrets.K8S_DOCKER_REPOSITORY }}
+      IMAGE_NAME: ${{ secrets.K8S_IMAGE_NAME }}
+      IMAGE_TAG: ${{ github.sha }}
+      K3S_SERVER: ${{ secrets.K8S_K3S_SERVER }}
+      K3S_USER: ${{ secrets.K8S_K3S_USER }}
+      SLACK_TITLE: "Deploy Production - Pin People API"
+      SLACK_ICON: "https://rails.org/favicon.ico"
+      SLACK_USERNAME: "Pin People Deploy"
+      SLACK_URL_APP: ${{ secrets.APP_URL }}
+
+    steps:
+      - name: Slack Notification (start)
+        uses: rtCamp/action-slack-notify@v2
+        continue-on-error: true
+        env:
+          SLACK_CHANNEL: ${{ secrets.SLACK_WEBHOOK_CHANNEL }}
+          SLACK_COLOR: "#FFD700"
+          SLACK_ICON: ${{ env.SLACK_ICON }}
+          SLACK_TITLE: "${{ env.SLACK_TITLE }} :hourglass_flowing_sand:"
+          SLACK_MESSAGE: "Deploy Started\n${{ env.SLACK_URL_APP }}"
+          SLACK_USERNAME: ${{ env.SLACK_USERNAME }}
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.K8S_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.K8S_AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.K8S_AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push Docker image
+        run: |
+          docker build -t $DOCKER_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG -t $DOCKER_REPOSITORY/$IMAGE_NAME:latest .
+          docker push $DOCKER_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG
+          docker push $DOCKER_REPOSITORY/$IMAGE_NAME:latest
+
+      - name: Update Kubernetes manifests
+        run: |
+          sed -i "s|image:.*|image: $DOCKER_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG|g" k8s/deployment.yml
+
+          # ConfigMap - Rails
+          sed -i "s|\${RAILS_LOG_LEVEL}|info|g" k8s/configmap-env.yml
+          sed -i "s|\${RAILS_MAX_THREADS}|5|g" k8s/configmap-env.yml
+          sed -i "s|\${RAILS_MASTER_KEY}|${{ secrets.RAILS_MASTER_KEY }}|g" k8s/configmap-env.yml
+          sed -i "s|\${DATABASE_URL}|${{ secrets.DATABASE_URL_PRODUCTION }}|g" k8s/configmap-env.yml
+
+          # Ingress host (use secret INGRESS_HOST or APP_URL domain)
+          INGRESS_HOST="${{ secrets.INGRESS_HOST }}"
+          if [ -z "$INGRESS_HOST" ]; then
+            INGRESS_HOST="api.pinpeople.example.com"
+          fi
+          sed -i "s|api.pinpeople.example.com|$INGRESS_HOST|g" k8s/ingress.yml
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.K8S_SSH_PRIVATE_KEY }}
+
+      - name: Copy K8s files to VPS
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ env.K3S_USER }}@${{ env.K3S_SERVER }} "mkdir -p /tmp/k8s-deploy"
+          scp -o StrictHostKeyChecking=no -r k8s/* ${{ env.K3S_USER }}@${{ env.K3S_SERVER }}:/tmp/k8s-deploy/
+
+      - name: Create ECR credentials in Kubernetes
+        run: |
+          ECR_PASSWORD=$(aws ecr get-login-password --region ${{ secrets.K8S_AWS_REGION }})
+          ECR_REGISTRY="${{ secrets.K8S_ECR_REGISTRY }}"
+          if [ -z "$ECR_REGISTRY" ]; then
+            ECR_REGISTRY="${DOCKER_REPOSITORY%%/*}"
+          fi
+
+          ssh -o StrictHostKeyChecking=no ${{ env.K3S_USER }}@${{ env.K3S_SERVER }} "sudo kubectl create namespace pin-people --dry-run=client -o yaml | sudo kubectl apply -f -"
+          ssh -o StrictHostKeyChecking=no ${{ env.K3S_USER }}@${{ env.K3S_SERVER }} "sudo kubectl create secret docker-registry ecr-credentials \
+            --docker-server=${ECR_REGISTRY} \
+            --docker-username=AWS \
+            --docker-password='${ECR_PASSWORD}' \
+            --namespace=pin-people \
+            --dry-run=client -o yaml | sudo kubectl apply -f -"
+
+      - name: Deploy to K8s
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ env.K3S_USER }}@${{ env.K3S_SERVER }} << 'EOF'
+            set -e
+            sudo kubectl create namespace pin-people --dry-run=client -o yaml | sudo kubectl apply -f -
+
+            FAILED_PODS=$(sudo kubectl get pods -n pin-people -o jsonpath='{.items[?(@.status.phase=="Failed")].metadata.name}' 2>/dev/null || true)
+            if [ -n "$FAILED_PODS" ]; then
+              for POD in $FAILED_PODS; do
+                sudo kubectl delete pod $POD -n pin-people --ignore-not-found=true
+              done
+            fi
+
+            sudo kubectl apply -f /tmp/k8s-deploy/configmap-env.yml
+            sudo kubectl apply -f /tmp/k8s-deploy/persistent-volume-claim-public-files.yml
+            sudo kubectl apply -f /tmp/k8s-deploy/redis-deployment.yml
+            sudo kubectl apply -f /tmp/k8s-deploy/redis-service.yml
+            sudo kubectl apply -f /tmp/k8s-deploy/deployment.yml
+            sudo kubectl apply -f /tmp/k8s-deploy/service.yml
+            sudo kubectl apply -f /tmp/k8s-deploy/ingress.yml
+            sudo kubectl rollout status deployment/pin-people-deployment -n pin-people --timeout=300s
+          EOF
+
+      - name: Slack Notification (success)
+        if: success()
+        uses: rtCamp/action-slack-notify@v2
+        continue-on-error: true
+        env:
+          SLACK_CHANNEL: ${{ secrets.SLACK_WEBHOOK_CHANNEL }}
+          SLACK_COLOR: "#2E8B57"
+          SLACK_ICON: ${{ env.SLACK_ICON }}
+          SLACK_TITLE: "${{ env.SLACK_TITLE }} :rocket:"
+          SLACK_MESSAGE: "Deploy Succeeded\n${{ env.SLACK_URL_APP }}"
+          SLACK_USERNAME: ${{ env.SLACK_USERNAME }}
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Slack Notification (failure)
+        if: failure()
+        uses: rtCamp/action-slack-notify@v2
+        continue-on-error: true
+        env:
+          SLACK_CHANNEL: ${{ secrets.SLACK_WEBHOOK_CHANNEL }}
+          SLACK_COLOR: "#F00"
+          SLACK_ICON: ${{ env.SLACK_ICON }}
+          SLACK_TITLE: "${{ env.SLACK_TITLE }} :x:"
+          SLACK_MESSAGE: "Deploy Failed\n${{ env.SLACK_URL_APP }}"
+          SLACK_USERNAME: ${{ env.SLACK_USERNAME }}
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Cleanup
+        if: always()
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ env.K3S_USER }}@${{ env.K3S_SERVER }} "rm -rf /tmp/k8s-deploy" || true
