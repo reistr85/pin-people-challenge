@@ -29,29 +29,30 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    environment: production
     env:
       DOCKER_REPOSITORY: ${{ secrets.K8S_DOCKER_REPOSITORY }}
       IMAGE_NAME: ${{ secrets.K8S_IMAGE_NAME }}
       IMAGE_TAG: ${{ github.sha }}
       K3S_SERVER: ${{ secrets.K8S_K3S_SERVER }}
       K3S_USER: ${{ secrets.K8S_K3S_USER }}
-      SLACK_TITLE: "Deploy Production - Pin People API"
-      SLACK_ICON: "https://rails.org/favicon.ico"
-      SLACK_USERNAME: "Pin People Deploy"
-      SLACK_URL_APP: ${{ secrets.APP_URL }}
+      # SLACK_TITLE: "Deploy Production - Pin People API"
+      # SLACK_ICON: "https://rails.org/favicon.ico"
+      # SLACK_USERNAME: "Pin People Deploy"
+      # SLACK_URL_APP: ${{ secrets.APP_URL }}
 
     steps:
-      - name: Slack Notification (start)
-        uses: rtCamp/action-slack-notify@v2
-        continue-on-error: true
-        env:
-          SLACK_CHANNEL: ${{ secrets.SLACK_WEBHOOK_CHANNEL }}
-          SLACK_COLOR: "#FFD700"
-          SLACK_ICON: ${{ env.SLACK_ICON }}
-          SLACK_TITLE: "${{ env.SLACK_TITLE }} :hourglass_flowing_sand:"
-          SLACK_MESSAGE: "Deploy Started\n${{ env.SLACK_URL_APP }}"
-          SLACK_USERNAME: ${{ env.SLACK_USERNAME }}
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
+      # - name: Slack Notification (start)
+      #   uses: rtCamp/action-slack-notify@v2
+      #   continue-on-error: true
+      #   env:
+      #     SLACK_CHANNEL: ${{ secrets.SLACK_WEBHOOK_CHANNEL }}
+      #     SLACK_COLOR: "#FFD700"
+      #     SLACK_ICON: ${{ env.SLACK_ICON }}
+      #     SLACK_TITLE: "${{ env.SLACK_TITLE }} :hourglass_flowing_sand:"
+      #     SLACK_MESSAGE: "Deploy Started\n${{ env.SLACK_URL_APP }}"
+      #     SLACK_USERNAME: ${{ env.SLACK_USERNAME }}
+      #     SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
 
       - name: Checkout code
         uses: actions/checkout@v4
