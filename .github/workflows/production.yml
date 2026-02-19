@@ -108,7 +108,7 @@ jobs:
           sed -i "s|api.k8s.pinpeople.mgetech.com.br|$INGRESS_HOST|g" k8s/ingress.yml
 
       - name: Setup SSH
-        uses: webfactory/ssh-agent@v0.8.0
+        uses: webfactory/ssh-agent@v0.9.1
         with:
           ssh-private-key: ${{ secrets.K8S_SSH_PRIVATE_KEY }}
 
