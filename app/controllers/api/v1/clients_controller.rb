@@ -33,7 +33,7 @@ module Api
       private
 
       def set_client
-        @client = Client.find_by!(uuid: params[:uuid])
+        @client = Client.find_by!(uuid: params[:id])
       end
 
       def client_params
