@@ -2,7 +2,7 @@
 
 module Api
   module V1
-    class EmployeesController < ApplicationController
+    class EmployeesController < BaseController
       before_action :set_employee, only: %i[show update destroy]
 
       def index

@@ -2,7 +2,7 @@
 
 module Api
   module V1
-    class HealthController < ApplicationController
+    class HealthController < BaseController
       # Liveness: app process is running
       def show
         head :ok

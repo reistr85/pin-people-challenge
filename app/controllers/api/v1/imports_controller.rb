@@ -2,7 +2,7 @@
 
 module Api
   module V1
-    class ImportsController < ApplicationController
+    class ImportsController < BaseController
       def create
         path = nil
         unless params[:file].respond_to?(:tempfile)
