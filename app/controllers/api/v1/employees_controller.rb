@@ -18,6 +18,10 @@ module Api
             term, term
           )
         end
+        if params[:client_uuid].present?
+          client = Client.find_by(uuid: params[:client_uuid])
+          scope = scope.where(client_id: client.id) if client
+        end
 
         @employees = scope.page(params[:page]).per(params[:per_page].presence || 25)
       end
@@ -27,13 +31,14 @@ module Api
 
       def create
         @employee = Employee.new(employee_params)
-        assign_associations_by_uuid!
+        assign_client_by_uuid!
         unless @employee.save
           render json: { errors: @employee.errors.full_messages }, status: :unprocessable_entity
         end
       end
 
       def update
+        assign_client_by_uuid!
         unless @employee.update(employee_params)
           render json: { errors: @employee.errors.full_messages }, status: :unprocessable_entity
         end
@@ -54,6 +59,13 @@ module Api
         params.require(:employee).permit(
           :name, :personal_email, :corporation_email, :uf, :city, :tenure, :gender
         )
+      end
+
+      def assign_client_by_uuid!
+        return unless params[:employee][:client_uuid].present?
+
+        client = Client.find_by(uuid: params[:employee][:client_uuid])
+        @employee.client = client if client
       end
     end
   end

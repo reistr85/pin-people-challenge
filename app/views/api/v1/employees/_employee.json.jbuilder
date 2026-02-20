@@ -9,6 +9,12 @@ json.city employee.city
 json.tenure employee.tenure
 json.gender employee.gender
 json.client_uuid employee.client&.uuid
+if employee.client
+  json.client do
+    json.uuid employee.client.uuid
+    json.name employee.client.name
+  end
+end
 json.job_title_uuid employee.job_title&.uuid
 json.departament_uuid employee.departament&.uuid
 json.role_uuid employee.role&.uuid
