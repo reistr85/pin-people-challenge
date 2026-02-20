@@ -6,11 +6,20 @@ module Api
       before_action :set_employee, only: %i[show update destroy]
 
       def index
-        @employees = Employee.active
+        scope = Employee.active
           .includes(:client, :job_title, :departament, :role)
           .order(created_at: :desc)
-          .page(params[:page])
-          .per(params[:per_page].presence || 25)
+
+        scope = scope.where("LOWER(name) LIKE LOWER(?)", "%#{params[:name].to_s.strip}%") if params[:name].present?
+        if params[:email].present?
+          term = "%#{params[:email].to_s.strip}%"
+          scope = scope.where(
+            "LOWER(personal_email) LIKE LOWER(?) OR LOWER(corporation_email) LIKE LOWER(?)",
+            term, term
+          )
+        end
+
+        @employees = scope.page(params[:page]).per(params[:per_page].presence || 25)
       end
 
       def show
