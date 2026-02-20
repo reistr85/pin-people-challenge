@@ -6,3 +6,9 @@ json.description survey.description
 json.created_at survey.created_at
 json.updated_at survey.updated_at
 json.deleted_at survey.deleted_at
+if survey.client
+  json.client do
+    json.uuid survey.client.uuid
+    json.name survey.client.name
+  end
+end
