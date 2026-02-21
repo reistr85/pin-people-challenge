@@ -39,6 +39,16 @@ class SurveyQuestionResponseTest < ActiveSupport::TestCase
     assert resp.errors[:employee].present?
   end
 
+  test "value must be 0..10 when present" do
+    survey = Survey.create!(name: "S")
+    q = survey.survey_questions.create!(question: "P?")
+    client = Client.create!(name: "C", email: "c@c.com")
+    emp = Employee.create!(name: "E", corporation_email: "e@e.com", client: client)
+    r = SurveyQuestionResponse.new(survey_question: q, employee: emp, value: 11)
+    assert_not r.valid?
+    assert r.errors[:value].present?
+  end
+
   test "belongs to survey_question and employee" do
     survey = Survey.create!(name: "S")
     q = survey.survey_questions.create!(question: "P1?")
