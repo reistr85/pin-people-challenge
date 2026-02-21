@@ -3,6 +3,7 @@
 class Employee < ApplicationRecord
   include SoftDeletable
 
+  belongs_to :user, optional: true
   belongs_to :client, optional: true
   belongs_to :job_title, optional: true
   belongs_to :departament, optional: true

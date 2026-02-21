@@ -12,7 +12,7 @@ module Api
             user.update_column(:auth_token, SecureRandom.urlsafe_base64(32))
             render json: {
               token: user.auth_token,
-              user: { id: user.id, email: user.email }
+              user: user_json(user)
             }
           else
             render json: { error: "Email ou senha inválidos" }, status: :unauthorized
@@ -25,13 +25,20 @@ module Api
         end
 
         def me
-          render json: { user: { id: current_user.id, email: current_user.email } }
+          render json: { user: user_json(current_user) }
         end
 
         private
 
         def session_params
           params.require(:session).permit(:email, :password)
+        end
+
+        def user_json(u)
+          payload = { id: u.id, email: u.email, role: u.role }
+          payload[:client_uuid] = u.client.uuid if u.client? && u.client.present?
+          payload[:employee_uuid] = u.employee.uuid if u.collaborator? && u.employee.present?
+          payload
         end
       end
     end

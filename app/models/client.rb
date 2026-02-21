@@ -3,6 +3,7 @@
 class Client < ApplicationRecord
   include SoftDeletable
 
+  belongs_to :user, optional: true
   has_many :employees, dependent: :nullify
   has_many :surveys, dependent: :nullify
 

@@ -4,9 +4,10 @@ module Api
   module V1
     class SurveysController < BaseController
       before_action :set_survey, only: %i[show update destroy]
+      before_action :authorize_surveys_write!, only: %i[create update destroy]
 
       def index
-        @surveys = Survey.active.includes(:client).order(created_at: :desc)
+        @surveys = surveys_scope.active.includes(:client).order(created_at: :desc)
       end
 
       def show
@@ -38,8 +39,26 @@ module Api
 
       private
 
+      def authorize_surveys_write!
+        return if current_user.admin?
+        return if current_user.client? && current_client
+        forbid! # collaborator: only read
+      end
+
+      def surveys_scope
+        if current_user.admin?
+          Survey.all
+        elsif current_user.client? && current_client
+          Survey.where(client_id: current_client.id)
+        elsif current_user.collaborator? && current_employee&.client_id.present?
+          Survey.where(client_id: current_employee.client_id)
+        else
+          Survey.none
+        end
+      end
+
       def set_survey
-        @survey = Survey.includes(:client, :survey_questions).find_by!(uuid: params[:id])
+        @survey = Survey.includes(:client, :survey_questions).merge(surveys_scope).find_by!(uuid: params[:id])
       end
 
       def survey_params
@@ -47,9 +66,11 @@ module Api
       end
 
       def assign_client_by_uuid!
-        if params[:survey][:client_uuid].present?
+        if current_user.admin? && params.dig(:survey, :client_uuid).present?
           client = Client.find_by(uuid: params[:survey][:client_uuid])
           @survey.client = client if client
+        elsif current_user.client? && current_client
+          @survey.client = current_client
         end
       end
 

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_19_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_02_19_140002) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pgcrypto"
@@ -21,9 +21,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_19_120000) do
     t.string "email", limit: 100
     t.string "name", limit: 100
     t.datetime "updated_at", null: false
+    t.bigint "user_id"
     t.uuid "uuid", default: -> { "gen_random_uuid()" }, null: false
     t.index ["deleted_at"], name: "index_clients_on_deleted_at"
     t.index ["email"], name: "index_clients_on_email"
+    t.index ["user_id"], name: "index_clients_on_user_id"
     t.index ["uuid"], name: "index_clients_on_uuid"
   end
 
@@ -52,6 +54,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_19_120000) do
     t.string "tenure", limit: 50
     t.string "uf", limit: 2
     t.datetime "updated_at", null: false
+    t.bigint "user_id"
     t.uuid "uuid", default: -> { "gen_random_uuid()" }, null: false
     t.index ["client_id"], name: "index_employees_on_client_id"
     t.index ["corporation_email"], name: "index_employees_on_corporation_email"
@@ -59,6 +62,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_19_120000) do
     t.index ["departament_id"], name: "index_employees_on_departament_id"
     t.index ["job_title_id"], name: "index_employees_on_job_title_id"
     t.index ["role_id"], name: "index_employees_on_role_id"
+    t.index ["user_id"], name: "index_employees_on_user_id"
     t.index ["uuid"], name: "index_employees_on_uuid"
   end
 
@@ -128,15 +132,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_19_120000) do
     t.datetime "created_at", null: false
     t.string "email", default: "", null: false
     t.string "encrypted_password", default: "", null: false
+    t.string "role", default: "collaborator", null: false
     t.datetime "updated_at", null: false
     t.index ["auth_token"], name: "index_users_on_auth_token", unique: true
     t.index ["email"], name: "index_users_on_email", unique: true
+    t.index ["role"], name: "index_users_on_role"
   end
 
+  add_foreign_key "clients", "users"
   add_foreign_key "employees", "clients"
   add_foreign_key "employees", "departaments"
   add_foreign_key "employees", "job_titles"
   add_foreign_key "employees", "roles"
+  add_foreign_key "employees", "users"
   add_foreign_key "survey_question_responses", "employees"
   add_foreign_key "survey_question_responses", "survey_questions"
   add_foreign_key "survey_questions", "surveys"

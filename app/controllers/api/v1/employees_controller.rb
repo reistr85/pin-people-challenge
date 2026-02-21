@@ -4,9 +4,12 @@ module Api
   module V1
     class EmployeesController < BaseController
       before_action :set_employee, only: %i[show update destroy]
+      before_action :authorize_employees_index!, only: [:index]
+      before_action :authorize_employees_create!, only: [:create]
+      before_action :authorize_employees_destroy!, only: [:destroy]
 
       def index
-        scope = Employee.active
+        scope = employees_scope.active
           .includes(:client, :job_title, :departament, :role)
           .order(created_at: :desc)
 
@@ -18,9 +21,11 @@ module Api
             term, term
           )
         end
-        if params[:client_uuid].present?
+        if params[:client_uuid].present? && current_user.admin?
           client = Client.find_by(uuid: params[:client_uuid])
           scope = scope.where(client_id: client.id) if client
+        elsif current_user.client? && current_client
+          scope = scope.where(client_id: current_client.id)
         end
 
         @employees = scope.page(params[:page]).per(params[:per_page].presence || 25)
@@ -51,21 +56,55 @@ module Api
 
       private
 
+      def authorize_employees_index!
+        return if current_user.admin?
+        return if current_user.client? && current_client
+        return if current_user.collaborator? && current_employee
+        forbid!
+      end
+
+      def authorize_employees_create!
+        return if current_user.admin?
+        return if current_user.client? && current_client
+        forbid!
+      end
+
+      def authorize_employees_destroy!
+        return if current_user.admin?
+        return if current_user.client? && current_client && employees_scope.exists?(@employee&.id)
+        forbid!
+      end
+
+      def employees_scope
+        if current_user.admin?
+          Employee.all
+        elsif current_user.client? && current_client
+          Employee.where(client_id: current_client.id)
+        elsif current_user.collaborator? && current_employee
+          Employee.where(id: current_employee.id)
+        else
+          Employee.none
+        end
+      end
+
       def set_employee
-        @employee = Employee.includes(:client, :job_title, :departament, :role).find_by!(uuid: params[:id])
+        @employee = Employee.includes(:client, :job_title, :departament, :role).merge(employees_scope).find_by!(uuid: params[:id])
       end
 
       def employee_params
-        params.require(:employee).permit(
-          :name, :personal_email, :corporation_email, :uf, :city, :tenure, :gender
-        )
+        list = %i[name personal_email corporation_email uf city tenure gender]
+        list << :user_id if current_user.admin?
+        params.require(:employee).permit(list)
       end
 
       def assign_client_by_uuid!
-        return unless params[:employee][:client_uuid].present?
-
-        client = Client.find_by(uuid: params[:employee][:client_uuid])
-        @employee.client = client if client
+        return unless params[:employee].present?
+        if current_user.admin? && params[:employee][:client_uuid].present?
+          client = Client.find_by(uuid: params[:employee][:client_uuid])
+          @employee.client = client if client
+        elsif current_user.client? && current_client
+          @employee.client = current_client
+        end
       end
     end
   end

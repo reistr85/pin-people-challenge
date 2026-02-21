@@ -17,24 +17,31 @@ class CsvImportJob < ApplicationJob
     "eNPS" => "[Aberta] eNPS"
   }.freeze
 
-  def perform(file_path, client_id = nil)
-    return unless File.exist?(file_path)
-
-    client = client_id ? Client.find_by(id: client_id) : nil
-    client ||= Client.find_or_create_by!(name: "Cliente Importação") do |c|
-      c.email = "importacao@cliente.local"
+  # Chamada com S3: perform(bucket, key, client_id)
+  # Chamada com arquivo local: perform(file_path, client_id)
+  def perform(arg1, arg2, arg3 = nil)
+    if arg3.present?
+      s3_bucket = arg1
+      s3_key = arg2
+      client_id = arg3
+      csv_content = S3ImportUploader.download(s3_bucket, s3_key)
+      process_csv_content(csv_content, client_id)
+    else
+      file_path = arg1
+      client_id = arg2
+      return unless File.exist?(file_path)
+      process_csv_file(file_path, client_id)
+      File.delete(file_path) if File.exist?(file_path)
     end
+  end
 
-    survey = Survey.find_or_create_by!(name: "Pesquisa de Clima") do |s|
-      s.client_id = client.id
-      s.description = "Importação via CSV"
-    end
-
+  def process_csv_file(file_path, client_id)
+    client = resolve_client(client_id)
+    survey = find_or_create_survey!(client)
     ensure_survey_questions!(survey)
 
     imported = 0
     errors_count = 0
-
     CSV.foreach(file_path, headers: true, col_sep: ";", encoding: "UTF-8") do |row|
       import_row(row, client, survey)
       imported += 1
@@ -42,9 +49,39 @@ class CsvImportJob < ApplicationJob
       errors_count += 1
       Rails.logger.warn("[CsvImportJob] Linha #{imported + errors_count + 1}: #{e.message}")
     end
-
-    File.delete(file_path) if File.exist?(file_path)
     Rails.logger.info("[CsvImportJob] Importação concluída: #{imported} linhas, #{errors_count} erros")
+  end
+
+  def process_csv_content(csv_content, client_id)
+    client = resolve_client(client_id)
+    survey = find_or_create_survey!(client)
+    ensure_survey_questions!(survey)
+
+    imported = 0
+    errors_count = 0
+    CSV.parse(csv_content, headers: true, col_sep: ";", encoding: "UTF-8") do |row|
+      import_row(row, client, survey)
+      imported += 1
+    rescue StandardError => e
+      errors_count += 1
+      Rails.logger.warn("[CsvImportJob] Linha #{imported + errors_count + 1}: #{e.message}")
+    end
+    Rails.logger.info("[CsvImportJob] Importação concluída (S3): #{imported} linhas, #{errors_count} erros")
+  end
+
+  def resolve_client(client_id)
+    client = client_id.present? ? Client.find_by(id: client_id) : nil
+    client ||= Client.find_or_create_by!(name: "Cliente Importação") do |c|
+      c.email = "importacao@cliente.local"
+    end
+    client
+  end
+
+  def find_or_create_survey!(client)
+    Survey.find_or_create_by!(name: "Pesquisa de Clima") do |s|
+      s.client_id = client.id
+      s.description = "Importação via CSV"
+    end
   end
 
   private

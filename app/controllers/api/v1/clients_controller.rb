@@ -4,15 +4,17 @@ module Api
   module V1
     class ClientsController < BaseController
       before_action :set_client, only: %i[show update destroy]
+      before_action :authorize_clients_access!, only: %i[index show create update destroy]
 
       def index
-        @clients = Client.active.order(created_at: :desc)
+        @clients = clients_scope.active.order(created_at: :desc)
       end
 
       def show
       end
 
       def create
+        return forbid! unless current_user.admin?
         @client = Client.new(client_params)
         unless @client.save
           render json: { errors: @client.errors.full_messages }, status: :unprocessable_entity
@@ -26,18 +28,37 @@ module Api
       end
 
       def destroy
+        return forbid! unless current_user.admin?
         @client.soft_delete
         head :no_content
       end
 
       private
 
+      def authorize_clients_access!
+        return if current_user.admin?
+        return if current_user.client?
+        forbid! if current_user.collaborator?
+      end
+
+      def clients_scope
+        if current_user.admin?
+          Client.all
+        elsif current_user.client? && current_client
+          Client.where(id: current_client.id)
+        else
+          Client.none
+        end
+      end
+
       def set_client
-        @client = Client.find_by!(uuid: params[:id])
+        @client = clients_scope.find_by!(uuid: params[:id])
       end
 
       def client_params
-        params.require(:client).permit(:name, :email)
+        list = %i[name email]
+        list << :user_id if current_user.admin?
+        params.require(:client).permit(list)
       end
     end
   end

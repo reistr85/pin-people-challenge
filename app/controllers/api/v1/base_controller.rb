@@ -3,6 +3,8 @@
 module Api
   module V1
     class BaseController < ApplicationController
+      include Authorizable
+
       before_action :force_json_format
       before_action :authenticate_user!
 
