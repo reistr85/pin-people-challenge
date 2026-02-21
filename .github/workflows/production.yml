@@ -103,9 +103,9 @@ jobs:
           sed -i "s|\${DATABASE_URL}|postgresql://pinpeople:0123456789@91.108.124.238:5432/pinpeople|g" k8s/configmap-env.yml
 
           # S3 (importação CSV) - usa secrets do GitHub; se não definidos, deixa placeholder vazio
-          sed -i "s|\${S3_IMPORT_BUCKET}|${{ secrets.S3_IMPORT_BUCKET }}|g" k8s/configmap-env.yml
-          sed -i "s|\${AWS_REGION}|${{ secrets.AWS_REGION }}|g" k8s/configmap-env.yml
-          sed -i "s|\${AWS_ACCESS_KEY_ID}|${{ secrets.S3_IMPORT_AWS_ACCESS_KEY_ID }}|g" k8s/configmap-env.yml
+          sed -i "s|\${S3_IMPORT_BUCKET}|${{ vars.S3_IMPORT_BUCKET }}|g" k8s/configmap-env.yml
+          sed -i "s|\${AWS_REGION}|${{ vars.AWS_REGION }}|g" k8s/configmap-env.yml
+          sed -i "s|\${AWS_ACCESS_KEY_ID}|${{ vars.S3_IMPORT_AWS_ACCESS_KEY_ID }}|g" k8s/configmap-env.yml
           sed -i "s|\${AWS_SECRET_ACCESS_KEY}|${{ secrets.S3_IMPORT_AWS_SECRET_ACCESS_KEY }}|g" k8s/configmap-env.yml
 
           # Ingress host (use secret INGRESS_HOST or APP_URL domain)
@@ -161,6 +161,8 @@ jobs:
             sudo kubectl apply -f /tmp/k8s-deploy/deployment.yml
             sudo kubectl apply -f /tmp/k8s-deploy/service.yml
             sudo kubectl apply -f /tmp/k8s-deploy/ingress.yml
+            # Reinicia os pods para carregarem o ConfigMap atualizado (incl. S3_IMPORT_BUCKET, AWS_*)
+            sudo kubectl rollout restart deployment/pin-people-deployment -n pin-people
             sudo kubectl rollout status deployment/pin-people-deployment -n pin-people --timeout=300s
           EOF
 
