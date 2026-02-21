@@ -15,6 +15,12 @@ Rails.application.routes.draw do
       get "ready", to: "health#ready"
       post "imports/csv", to: "imports#create"
 
+      namespace :auth do
+        post "sign_in", to: "sessions#create"
+        delete "sign_out", to: "sessions#destroy"
+        get "me", to: "sessions#me"
+      end
+
       resources :clients
       resources :surveys
       resources :employees
