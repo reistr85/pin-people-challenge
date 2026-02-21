@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pin-people-sidekiq
+  namespace: pin-people
+  labels:
+    app: pin-people-sidekiq
+spec:
+  selector:
+    matchLabels:
+      app: pin-people-sidekiq
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: pin-people-sidekiq
+    spec:
+      imagePullSecrets:
+        - name: ecr-credentials
+      containers:
+        - name: sidekiq
+          image: PLACEHOLDER_IMAGE
+          command: ["bundle", "exec", "sidekiq"]
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          envFrom:
+            - configMapRef:
+                name: pin-people-configmap-env

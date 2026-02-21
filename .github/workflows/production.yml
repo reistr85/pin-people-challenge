@@ -134,6 +134,7 @@ jobs:
       - name: Update Kubernetes manifests
         run: |
           sed -i "s|image:.*|image: $DOCKER_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG|g" k8s/deployment.yml
+          sed -i "s|image:.*|image: $DOCKER_REPOSITORY/$IMAGE_NAME:$IMAGE_TAG|g" k8s/sidekiq-deployment.yml
 
           # ConfigMap - Rails
           sed -i "s|\${RAILS_LOG_LEVEL}|info|g" k8s/configmap-env.yml
@@ -198,11 +199,13 @@ jobs:
             sudo kubectl apply -f /tmp/k8s-deploy/redis-deployment.yml
             sudo kubectl apply -f /tmp/k8s-deploy/redis-service.yml
             sudo kubectl apply -f /tmp/k8s-deploy/deployment.yml
+            sudo kubectl apply -f /tmp/k8s-deploy/sidekiq-deployment.yml
             sudo kubectl apply -f /tmp/k8s-deploy/service.yml
             sudo kubectl apply -f /tmp/k8s-deploy/ingress.yml
-            # Reinicia os pods para carregarem o ConfigMap atualizado (incl. S3_IMPORT_BUCKET, AWS_*)
             sudo kubectl rollout restart deployment/pin-people-deployment -n pin-people
+            sudo kubectl rollout restart deployment/pin-people-sidekiq -n pin-people
             sudo kubectl rollout status deployment/pin-people-deployment -n pin-people --timeout=300s
+            sudo kubectl rollout status deployment/pin-people-sidekiq -n pin-people --timeout=120s
           EOF
 
       # - name: Slack Notification (success)
