@@ -15,7 +15,13 @@ module Api
 
       def create
         return forbid! unless current_user.admin?
-        @client = Client.new(client_params)
+        @client = Client.new(client_params.except(:user_id))
+        user = build_user_for_client(@client)
+        unless user
+          render json: { errors: @client.errors.full_messages }, status: :unprocessable_entity
+          return
+        end
+        @client.user_id = user.id
         unless @client.save
           render json: { errors: @client.errors.full_messages }, status: :unprocessable_entity
         end
@@ -59,6 +65,18 @@ module Api
         list = %i[name email]
         list << :user_id if current_user.admin?
         params.require(:client).permit(list)
+      end
+
+      def build_user_for_client(client)
+        email = client.email.presence || "client-#{SecureRandom.hex(4)}@placeholder.local"
+        user = User.new(
+          email: email,
+          password: User::DEFAULT_PASSWORD,
+          role: "client"
+        )
+        return user if user.save
+        client.errors.merge!(user.errors)
+        nil
       end
     end
   end

@@ -22,7 +22,11 @@ Rails.application.routes.draw do
       end
 
       resources :clients
-      resources :surveys
+      resources :surveys do
+        member do
+          put :responses
+        end
+      end
       resources :employees
     end
   end

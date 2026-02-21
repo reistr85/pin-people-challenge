@@ -2,6 +2,7 @@
 
 class User < ApplicationRecord
   ROLES = %w[admin client collaborator].freeze
+  DEFAULT_PASSWORD = "12345678"
 
   devise :database_authenticatable, :validatable
 

@@ -35,8 +35,14 @@ module Api
       end
 
       def create
-        @employee = Employee.new(employee_params)
+        @employee = Employee.new(employee_params.except(:user_id))
         assign_client_by_uuid!
+        user = build_user_for_employee(@employee)
+        unless user
+          render json: { errors: @employee.errors.full_messages }, status: :unprocessable_entity
+          return
+        end
+        @employee.user_id = user.id
         unless @employee.save
           render json: { errors: @employee.errors.full_messages }, status: :unprocessable_entity
         end
@@ -105,6 +111,20 @@ module Api
         elsif current_user.client? && current_client
           @employee.client = current_client
         end
+      end
+
+      def build_user_for_employee(employee)
+        email = employee.corporation_email.presence ||
+                employee.personal_email.presence ||
+                "collaborator-#{SecureRandom.hex(4)}@placeholder.local"
+        user = User.new(
+          email: email,
+          password: User::DEFAULT_PASSWORD,
+          role: "collaborator"
+        )
+        return user if user.save
+        employee.errors.merge!(user.errors)
+        nil
       end
     end
   end
