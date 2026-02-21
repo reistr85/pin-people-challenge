@@ -37,6 +37,7 @@ class CsvImportJob < ApplicationJob
 
   def process_csv_file(file_path, client_id)
     client = resolve_client(client_id)
+    ensure_user_for_client!(client)
     survey = find_or_create_survey!(client)
     ensure_survey_questions!(survey)
 
@@ -54,6 +55,7 @@ class CsvImportJob < ApplicationJob
 
   def process_csv_content(csv_content, client_id)
     client = resolve_client(client_id)
+    ensure_user_for_client!(client)
     survey = find_or_create_survey!(client)
     ensure_survey_questions!(survey)
 
@@ -110,6 +112,7 @@ class CsvImportJob < ApplicationJob
       gender: row["genero"]&.strip
     )
     employee.save!
+    ensure_user_for_employee!(employee)
 
     QUESTION_COLUMNS.each do |question_label, comment_label|
       question = survey.survey_questions.find_by!(question: question_label)
@@ -144,5 +147,33 @@ class CsvImportJob < ApplicationJob
   def parse_score(value)
     return nil if value.blank? || value.to_s.strip == "-"
     value.to_s.strip.to_i
+  end
+
+  def ensure_user_for_client!(client)
+    return if client.user_id.present?
+    email = client.email.presence || "client-#{client.uuid}@placeholder.local"
+    user = User.find_or_initialize_by(email: email)
+    user.assign_attributes(password: User::DEFAULT_PASSWORD, role: "client") if user.new_record?
+    user.save! if user.new_record? || user.changed?
+    client.update_column(:user_id, user.id)
+  end
+
+  def ensure_user_for_employee!(employee)
+    return if employee.user_id.present?
+    email = employee.corporation_email.presence ||
+            employee.personal_email.presence ||
+            "collaborator-#{employee.uuid}@placeholder.local"
+    user = User.find_by(email: email)
+    if user && (user.employee_id.blank? || user.employee_id == employee.id)
+      employee.update_column(:user_id, user.id)
+      return
+    end
+    email = "collaborator-#{employee.uuid}@placeholder.local" if user.present?
+    user = User.create!(
+      email: email,
+      password: User::DEFAULT_PASSWORD,
+      role: "collaborator"
+    )
+    employee.update_column(:user_id, user.id)
   end
 end
