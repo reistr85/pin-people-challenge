@@ -17,10 +17,10 @@ class CsvImportJob < ApplicationJob
     "eNPS" => "[Aberta] eNPS"
   }.freeze
 
-  # Chamada com S3: perform(bucket, key, client_id)
+  # Chamada com S3: perform(bucket, key, client_id) — client_id pode ser nil
   # Chamada com arquivo local: perform(file_path, client_id)
   def perform(arg1, arg2, arg3 = nil)
-    if arg3.present?
+    if arg2.is_a?(String) && arg2.start_with?("imports/")
       s3_bucket = arg1
       s3_key = arg2
       client_id = arg3
