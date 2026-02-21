@@ -12,6 +12,8 @@
 #   RAILS_MASTER_KEY       - conteúdo de config/master.key
 #   DATABASE_URL_PRODUCTION - ex: postgres://user:pass@host:5432/challenge_production
 #   INGRESS_HOST           - (opcional) host do ingress, ex: api.seudominio.com.br
+#   S3_IMPORT_BUCKET       - (opcional) nome do bucket S3 para importação CSV
+#   S3_IMPORT_AWS_ACCESS_KEY_ID, S3_IMPORT_AWS_SECRET_ACCESS_KEY, AWS_REGION - (opcional) credenciais S3
 #   APP_URL                - (opcional) URL da API para notificações
 #   SLACK_WEBHOOK_URL, SLACK_WEBHOOK_CHANNEL - (opcional) notificações Slack
 name: 🚀 Deploy Pin People API (K8s)
@@ -99,6 +101,12 @@ jobs:
           sed -i "s|\${RAILS_MAX_THREADS}|5|g" k8s/configmap-env.yml
           sed -i "s|\${RAILS_MASTER_KEY}|${{ secrets.RAILS_MASTER_KEY }}|g" k8s/configmap-env.yml
           sed -i "s|\${DATABASE_URL}|postgresql://pinpeople:0123456789@91.108.124.238:5432/pinpeople|g" k8s/configmap-env.yml
+
+          # S3 (importação CSV) - usa secrets do GitHub; se não definidos, deixa placeholder vazio
+          sed -i "s|\${S3_IMPORT_BUCKET}|${{ secrets.S3_IMPORT_BUCKET }}|g" k8s/configmap-env.yml
+          sed -i "s|\${AWS_REGION}|${{ secrets.AWS_REGION }}|g" k8s/configmap-env.yml
+          sed -i "s|\${AWS_ACCESS_KEY_ID}|${{ secrets.S3_IMPORT_AWS_ACCESS_KEY_ID }}|g" k8s/configmap-env.yml
+          sed -i "s|\${AWS_SECRET_ACCESS_KEY}|${{ secrets.S3_IMPORT_AWS_SECRET_ACCESS_KEY }}|g" k8s/configmap-env.yml
 
           # Ingress host (use secret INGRESS_HOST or APP_URL domain)
           INGRESS_HOST="${{ secrets.INGRESS_HOST }}"

@@ -13,3 +13,8 @@ data:
   DATABASE_URL: "${DATABASE_URL}"
   # Redis (Sidekiq, Action Cable, cache)
   REDIS_URL: "redis://redis-service:6379/0"
+  # S3 - importação de CSV (preenchido pelo workflow a partir dos secrets)
+  S3_IMPORT_BUCKET: "${S3_IMPORT_BUCKET}"
+  AWS_REGION: "${AWS_REGION}"
+  AWS_ACCESS_KEY_ID: "${AWS_ACCESS_KEY_ID}"
+  AWS_SECRET_ACCESS_KEY: "${AWS_SECRET_ACCESS_KEY}"
