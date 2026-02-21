@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 class DatabaseCleanerService
-  # Remove todos os dados de negócio (mantém apenas Users).
-  # Ordem respeitando FKs: respostas -> perguntas -> enquetes -> colaboradores -> clientes -> cargos/áreas/funções
+  # Remove todos os dados de negócio e usuários não-admin.
+  # Ordem: respostas -> perguntas -> enquetes -> colaboradores -> clientes -> cargos/áreas/funções -> users (exceto admin)
   def self.clear_all!
     ActiveRecord::Base.transaction do
       SurveyQuestionResponse.unscoped.delete_all
@@ -13,6 +13,7 @@ class DatabaseCleanerService
       JobTitle.unscoped.delete_all
       Departament.unscoped.delete_all
       Role.unscoped.delete_all
+      User.where.not(role: "admin").delete_all
     end
   end
 end
