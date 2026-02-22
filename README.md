@@ -34,6 +34,19 @@ API REST em Rails da aplicação Pin People: gestão de clientes, colaboradores,
 
 ---
 
+## Serviços AWS e infraestrutura
+
+Serviços utilizados em produção para hospedagem, storage e rede:
+
+| Logo | Serviço | Descrição |
+|------|---------|-----------|
+| <img src="https://cdn.simpleicons.org/amazonaws/232F3E" width="24" height="24" alt="AWS" /> | **Amazon ECR** | Registry de imagens Docker. O build da API é enviado ao ECR e o Kubernetes (K3s) faz pull da imagem para os pods. |
+| <img src="https://cdn.simpleicons.org/amazons3/569A31" width="24" height="24" alt="S3" /> | **Amazon S3** | Bucket para armazenar os arquivos CSV da importação. O upload é feito pela API e o job Sidekiq processa o arquivo a partir do S3. |
+| <img src="https://cdn.simpleicons.org/cloudflare/F38020" width="24" height="24" alt="Cloudflare" /> | **Cloudflare** | DNS, proxy reverso e proteção (DDoS, WAF). O tráfego para a API pode passar pelo Cloudflare antes de chegar ao cluster. |
+| <img src="https://cdn.simpleicons.org/traefikproxy/24E1B4" width="24" height="24" alt="Traefik" /> | **Certificado SSL / Traefik** | Terminação TLS e emissão/renovação de certificados (ex.: Let's Encrypt) no cluster, via Ingress e Traefik ou similar. |
+
+---
+
 ## Rodar o projeto localmente
 
 ### Pré-requisitos
